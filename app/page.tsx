@@ -1,65 +1,194 @@
-import Image from "next/image";
+import Link from "next/link";
+import { openDb } from '@/lib/db'; // Import a chave do nosso banco
+import { revalidatePath } from 'next/cache'; // da um f5 invisivel quando atualizar o bd
+import BotaoEntregue from './BotaoEntregue';
 
-export default function Home() {
-  return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+export default async function Home() {
+    // conexão com o bd
+    const db = await openDb();
+
+    // Traz o pedido e os dados da dona do pedido
+    const pedidos = await db.all(`
+        SELECT
+            Pedido.ID as pedidoId,
+            Pedido.descricao,
+            Pedido.status,
+            Cliente.nome,
+            Cliente.telefone,
+            Cliente.nif
+        FROM Pedido
+        INNER JOIN Cliente ON Pedido.cliente_ID = Cliente.ID
+    `);
+
+    // Filtro da lista gigante em duas listas menores
+    const pendentes = pedidos.filter(p => p.status === 'Pendente');
+    const emAndamento = pedidos.filter(p => p.status === 'Em Andamento');
+    const finalizados = pedidos.filter(p => p.status === 'Finalizado');
+
+    async function mudarStatus(formData: FormData) {
+        "use server"; // Garante que a segurança e execução fiquem no servidor
+
+        const idDaTela = formData.get('id');
+        const novoStatus = formData.get('status');
+
+        console.log("--------------------");
+        console.log("Botão clicado, pedido ID: ", idDaTela);
+        console.log("tentar mudar para: ",novoStatus);
+
+        try{
+            const banco = await openDb();
+
+            const idNumero = Number(idDaTela);
+
+            // Atualiza a coluna status baseado no ID do pedido
+            const resultado = await banco.run('UPDATE Pedido SET status = ? WHERE ID = ?', [novoStatus, idNumero]);
+
+            // diz quantas linhas ele conseguiu alterar
+            console.log("Linhas alteradas no banco:", resultado.changes);
+            console.log("--------------------");
+
+            // Recarrega a página Home instantaneamente para mostrar o cartão na nova coluna
+            revalidatePath('/');
+        } catch(erro){
+            console.error("erro no update: ", erro);
+        }
+    }
+
+    return (
+        <main>
+            <header className="header-principal">
+                <div className="nome">
+                    <h1>Ateliê</h1>
+                </div>
+                <div className="cadastro">
+                    <Link href="/cadastro" className="botao-novo-pedido">
+                        + Novo Pedido
+                    </Link>
+                </div>
+            </header>
+
+            <section className="quadro">
+
+                <div className="coluna coluna-pendente">
+                    <h2>Pendentes</h2>
+
+                    {pendentes.map((pedido) => (
+                        <article key={pedido.pedidoId} className="cartao-pedido">
+                            <div className="info-linha">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icone-azul">
+                                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                                </svg>
+                                <p className="nome-cliente">{pedido.nome}</p>
+                            </div>
+
+                            <div className="info-linha">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icone-vermelho">
+                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                                </svg>
+                                <a
+                                    href={`https://wa.me/351${pedido.telefone.replace(/\D/g, '')}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="numero-cliente"
+                                >
+                                    {pedido.telefone}
+                                </a>
+                            </div>
+
+                            <p className="nis-cliente">NIF {pedido.nif}</p>
+                            <p className="descricao-produto">{pedido.descricao}</p>
+
+                            <form action={mudarStatus}>
+                                <input type="hidden" name="id" value={pedido.pedidoId} />
+                                <input type="hidden" name="status" value="Em Andamento"/>
+                                <button className="botao-proximo">→ Começar</button>
+                            </form>
+                        </article>
+                    ))}
+                </div>
+
+                <div className="coluna coluna-andamento">
+                    <h2>Em Andamento</h2>
+
+                    {emAndamento.map((pedido) => (
+                        <article key={pedido.pedidoId} className="cartao-pedido">
+                             <div className="info-linha">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icone-azul">
+                                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                                </svg>
+                                <p className="nome-cliente">{pedido.nome}</p>
+                            </div>
+                            <div className="info-linha">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icone-vermelho">
+                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                                </svg>
+                                <a
+                                    href={`https://wa.me/351${pedido.telefone.replace(/\D/g, '')}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="numero-cliente"
+                                >
+                                    {pedido.telefone}
+                                </a>
+                            </div>
+
+                            <p className="nis-cliente">NIF {pedido.nif}</p>
+                            <p className="descricao-produto">{pedido.descricao}</p>
+                            <div className="botao-andamento">
+                                <form action={mudarStatus}>
+                                    <input type="hidden" name="id" value={pedido.pedidoId} />
+                                    <input type="hidden" name="status" value="Pendente" />
+                                    <button className="botao-voltar">↩ Voltar</button>
+                                </form>
+                                <form action={mudarStatus}>
+                                    <input type="hidden" name="id" value={pedido.pedidoId} />
+                                    <input type="hidden" name="status" value="Finalizado" />
+                                    <button className="botao-finalizar">✓ Finalizar</button>
+                                </form>
+                            </div>
+                        </article>
+                    ))}
+                </div>
+                <div className="coluna coluna-finalizado">
+                    <h2>Finalizados</h2>
+                    {finalizados.map((pedido) => (
+                        <article key={pedido.pedidoId} className="cartao-pedido">
+                            <div className="info-linha">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icone-azul">
+                                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                                    </svg>
+                                    <p className="nome-cliente">{pedido.nome}</p>
+                            </div>
+                            <div className="info-linha">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icone-vermelho">
+                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                                </svg>
+                                <a
+                                    href={`https://wa.me/351${pedido.telefone.replace(/\D/g, '')}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="numero-cliente"
+                                >
+                                    {pedido.telefone}
+                                </a>
+                            </div>
+                            <p className="nis-cliente">NIF {pedido.nif}</p>
+                            <p className="descricao-produto">{pedido.descricao}</p>
+
+                            <div className="botao-andamento">
+                                <form action={mudarStatus}>
+                                    <input type="hidden" name="id" value={pedido.pedidoId} />
+                                    <input type="hidden" name="status" value="Em Andamento" />
+                                    <button className="botao-voltar">↩ Reabrir</button>
+                                </form>
+
+                                <BotaoEntregue pedidoId={pedido.pedidoId} mudarStatus={mudarStatus} />
+                            </div>
+                        </article>
+                    ))}
+                </div>
+
+            </section>
+        </main>
+    );
 }
