@@ -15,7 +15,7 @@ export async function GET() {
 
       CREATE TABLE IF NOT EXISTS Pedido (
         ID INTEGER PRIMARY KEY,
-        descricao TEXT NOT NULL,
+        descricao TEXT,
         status TEXT NOT NULL,
         cliente_ID INTEGER,
         FOREIGN KEY(cliente_ID) REFERENCES Cliente(ID)

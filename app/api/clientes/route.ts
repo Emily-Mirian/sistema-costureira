@@ -20,7 +20,7 @@ export async function POST(request: Request) {
 
         CREATE TABLE IF NOT EXISTS Pedido (
             ID INTEGER PRIMARY KEY,
-            descricao TEXT NOT NULL,
+            descricao TEXT,
             status TEXT NOT NULL,
             cliente_ID INTEGER,
             FOREIGN KEY(cliente_ID) REFERENCES Cliente(ID)
@@ -45,10 +45,10 @@ export async function POST(request: Request) {
 
         await db.run(
             'INSERT INTO Pedido (descricao, status, cliente_ID) VALUES (?, ?, ?)',
-            [dados.descricao, 'Pendente', clienteId]
+            ['', 'Em Andamento', clienteId]
         );
 
-        return NextResponse.json({ mensagem: "Cliente e Pedido salvos com sucesso!" });
+        return NextResponse.json({ mensagem: "Cliente cadastrado e costura iniciada!" });
 
     } catch (erro) {
         console.error("Erro no servidor:", erro);

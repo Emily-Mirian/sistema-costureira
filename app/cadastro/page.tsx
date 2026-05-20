@@ -56,19 +56,28 @@ export default function Cadastro() {
                         <input type="text" id="nome" name="nome" placeholder="Ex: Maria Silva" required />
                     </div>
 
+                    <div className="campo" style={{ marginBottom: '15px' }}>
+                        <label htmlFor="codigoPais" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>País:</label>
+                        <select
+                            id="codigoPais"
+                            name="codigoPais"
+                            defaultValue="351" /* Deixa Portugal como padrão se a maioria das clientes for de lá */
+                            style={{ width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid #d1d5db', backgroundColor: '#f8f5ee' }}
+                        >
+                            <option value="351">Portugal (+351)</option>
+                            <option value="55">Brasil (+55)</option>
+                            <option value="34">Espanha (+34)</option>
+                        </select>
+                    </div>
+
                     <div className="campo">
                         <label htmlFor="telefone">Telefone</label>
-                        <input type="text" id="telefone" name="telefone" placeholder="(41) 99999-9999" required />
+                        <input type="text" id="telefone" name="telefone" placeholder="DDD + 999999999" required />
                     </div>
 
                     <div className="campo">
                         <label htmlFor="nif">NIF</label>
                         <input type="text" id="nif" name="nif" placeholder="99999999999" required />
-                    </div>
-
-                    <div className="campo">
-                        <label htmlFor="descricao">Descrição do Serviço</label>
-                        <textarea id="descricao" name="descricao" placeholder="Ex: Ajuste de barra em vestido" required></textarea>
                     </div>
 
                     <div className="grupo-botoes">

@@ -1,3 +1,7 @@
+*{
+    box-sizing: border-box;
+    margin: 0;
+}
 body{
     background-color: #f8f5ee;
 }
@@ -28,21 +32,20 @@ body{
         grid-template-columns: 1fr 1fr 1fr;
     }
 }
+h2{
+    padding: 20px;
+}
 .coluna{
     border-radius: 10px;
     padding: 0px 20px 20px 20px;
-}
-.coluna-pendente{
-    background-color: #f1e3c7;
-    border: 2px solid #d9c098;
 }
 .coluna-andamento{
     background-color: #c1e2ff;
     border: 2px solid #7cb3eb;
 }
-.coluna-finalizado {
-    background-color: #d1fae5;
-    border: 2px solid #10b981;
+.barra-pesquisa{
+    width: 100%;
+    margin-bottom: 20px;
 }
 .cartao-pedido{
     background-color: #ffffff;
@@ -80,9 +83,12 @@ body{
 .nome-cliente, .numero-cliente {
     margin: 0;
 }
-.descricao-produto{
-    color: #9a979b;
-    font-size: 15px;
+
+.cartao-cliente-simples{
+     display: flex;
+     justify-content: space-between;
+     align-items: center;
+     gap: 10px;
 }
 .botao-proximo{
     background-color: #ea6b64;
@@ -179,4 +185,81 @@ input,textarea{
 }
 .salvar:hover{
     background-color: #e57b77
+}
+
+
+.cabecalho-mobile {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 10px 0;
+}
+
+.botao-hamburguer {
+    background: none;
+    border: none;
+    font-size: 30px;
+    cursor: pointer;
+    color: #333;
+    padding: 5px;
+}
+
+.menu-lateral {
+    position: fixed;
+    top: 0;
+    left: -100%; /* Escondido totalmente fora da tela à esquerda */
+    width: 85%; /* Ocupa 85% da tela no celular */
+    max-width: 400px; /* Limite de tamanho no PC */
+    height: 100vh; /* Ocupa a altura inteira da tela */
+    background-color: #f9f8f4;
+    box-shadow: 4px 0 15px rgba(0,0,0,0.2);
+    transition: left 0.3s ease-in-out; /*deslizamento suave */
+    z-index: 1000; /* Fica por cima de tudo */
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.menu-lateral.aberto {
+    left: 0;
+}
+
+/* fundo escurecido*/
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.4);
+    z-index: 999; /* Fica logo atrás do menu */
+    opacity: 0;
+    pointer-events: none; /* Impede cliques quando invisível */
+    transition: opacity 0.3s ease;
+}
+
+.overlay.aberto {
+    opacity: 1;
+    pointer-events: all; /* Libera o clique para fechar o menu */
+}
+
+/* --- CABEÇALHO DENTRO DO MENU --- */
+.cabecalho-menu {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.botao-fechar {
+    background: none;
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+    color: #666;
+}
+
+.lista-clientes-scroll {
+    overflow-y: auto; /* Adiciona barra de rolagem se tiver muitos clientes */
+    flex: 1;
 }

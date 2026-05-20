@@ -1,18 +1,23 @@
-"use client"; // avisa o Next.js que isso roda no navegador
+"use client";
 
-export default function BotaoEntregue({ pedidoId, mudarStatus }: { pedidoId: number, mudarStatus: (formData: FormData) => void }) {
+import { marcarComoEntregue } from './actions';
+import { useRouter } from 'next/navigation'; // <-- 1. IMPORTAMOS O ROTEADOR
+
+export default function BotaoEntregue({ pedidoId }: { pedidoId: number }) {
+    const router = useRouter(); // <-- 2. ATIVAMOS O ROTEADOR
+
     return (
-        <form action={mudarStatus} onSubmit={(e) => {
-            // Se clicar em "Cancelar" no aviso, o envio é interrompido
-            if (!window.confirm("O pedido foi entregue para o cliente?")) {
-                e.preventDefault();
-            }
-        }}>
-            <input type="hidden" name="id" value={pedidoId} />
-            <input type="hidden" name="status" value="Entregue" />
-            <button type="submit" className="botao-proximo">
-                ✓ Entregue
-            </button>
-        </form>
+        <button
+            className="botao-proximo"
+            onClick={async () => {
+                if (window.confirm("O pedido foi entregue para a cliente?")) {
+                    await marcarComoEntregue(pedidoId); // Altera no banco
+
+                    router.refresh(); // <-- 3. A MÁGICA: Obriga a tela a buscar os dados novos do servidor!
+                }
+            }}
+        >
+            ✓ Entregue
+        </button>
     );
 }
